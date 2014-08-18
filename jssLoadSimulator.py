@@ -89,7 +89,7 @@ class Computer():
             except urllib2.HTTPError as inst:
                 print "\tException submitting PUT XML: %s" % inst
             except:
-                print "\tUknown error submitting PUT XML"
+                print "\tUnknown error submitting PUT XML"
 
 
 class SubmitThread(threading.Thread):
