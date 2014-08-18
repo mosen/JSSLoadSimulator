@@ -1,5 +1,5 @@
 #!/usr/bin/python
-
+#EULA
 jss_host = "matt.sup.jamfsw.corp"
 jss_port = 8443
 jss_path = ""
