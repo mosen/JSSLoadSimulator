@@ -53,6 +53,7 @@ def main(argv):
         x += 1
     write_settings_to_plist()
 
+
 class Computer():
     def __init__(self, detail_string, index):
         self.detail_string = randomize_computer(detail_string)
