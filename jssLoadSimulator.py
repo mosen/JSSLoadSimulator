@@ -261,7 +261,6 @@ def connect_jss_client(path, method, body):
     try:
         session = requests.Session()
         session.mount("https://" + str(jss_host) + ":" + str(jss_port), MyAdapter())
-        session.auth = (jss_username, jss_password)
         session.headers.update({'Content-Type':'application/xml'})
 
         if method == 'GET':
