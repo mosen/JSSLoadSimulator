@@ -1,10 +1,7 @@
 #!/usr/bin/python
 #EULA
 
-
-import httplib
 import base64
-import urllib2
 import uuid
 import re
 import random
@@ -16,6 +13,10 @@ import getopt
 import os
 import plistlib
 import getpass
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.poolmanager import PoolManager
+import ssl
 
 
 enrolledComputers = []
@@ -69,7 +70,7 @@ class Computer():
         self.alt_mac_address = random_mac()
         clean_string = re.sub(r'<alt_mac_address></alt_mac_address>',
                         '<alt_mac_address>' + str(self.alt_mac_address) + '</alt_mac_address>', clean_string, )
-        name_file = open('/Users/matthewfjerstad/Documents/LoadSimulator/names')
+        name_file = open(str(os.getcwd()) + '/resources/names')
         name_list = name_file.readlines()
         name_file.close()
         username = name_list[random.randint(0, len(name_list) - 1)].strip()
@@ -108,7 +109,7 @@ class Computer():
             print "Starting to check in computer: " + str(self.computer_id)
             checkin_response = connect_jss_client("/client", "POST", self.checkin_string)
             try:
-                response_parse = xml.dom.minidom.parseString(checkin_response.read())
+                response_parse = xml.dom.minidom.parseString(checkin_response)
                 response_id = response_parse.getElementsByTagName('code')[0].childNodes[0].data
                 if str(response_id) == "1501":
                     print "Check in failed for computer: " + self.computer_id + \
@@ -196,13 +197,13 @@ def get_auth_header(u, p):
 
 
 def get_initial_computer():
-    computer_file = open("/Users/matthewfjerstad/Documents/LoadSimulator/computerXML")
+    computer_file = open(str(os.getcwd()) + "/resources/computerXML")
     computer_string = computer_file.read()
     computer_file.close()
     return computer_string
 
 def get_checkin_string():
-    checkin_file = open("/Users/matthewfjerstad/Documents/LoadSimulator/computerCheckin")
+    checkin_file = open(str(os.getcwd()) + "/resources/computerCheckin")
     checkin_string = checkin_file.read()
     checkin_file.close()
     return checkin_string
@@ -231,43 +232,47 @@ def random_mac():
     return ':'.join(map(lambda x: "%02x" % x, mac))
 
 
+class MyAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False):
+        self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize, block=block,ssl_version=ssl.PROTOCOL_TLSv1)
+
+
 def connect_jss(path, method, body):
     try:
-        url = "https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path)
-        opener = urllib2.build_opener(urllib2.HTTPHandler)
-        request = urllib2.Request(url, body)
-        request.add_header("Authorization", get_auth_header(jss_username, jss_password))
-        request.add_header('Content-Type', 'application/xml')
-        request.get_method = lambda: str(method)
-        response = opener.open(request)
-        return response.read()
-    except httplib.HTTPException as inst:
-        print "\tException: %s" % inst
-    except ValueError as inst:
-        print "\tException submitting " + str(method) + " XML: " + str(inst)
-    except urllib2.HTTPError as inst:
-        print "\tException submitting " + str(method) + " XML: " + str(inst)
-    except:
-        print "\tUnknown error submitting " + str(method) + " XML"
+        session = requests.Session()
+        session.mount("https://" + str(jss_host) + ":" + str(jss_port), MyAdapter())
+        session.auth = (jss_username, jss_password)
+        session.headers.update({'Content-Type':'application/xml'})
+
+        if method == 'GET':
+            response = session.get("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path))
+        elif method == 'POST':
+            response = session.post("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+        elif method == 'PUT':
+            response = session.put("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+
+        return response.text
+    except requests.exceptions.RequestException as e:
+        print "Connection exception: " + str(e)
 
 
 def connect_jss_client(path, method, body):
     try:
-        url = "https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path)
-        opener = urllib2.build_opener(urllib2.HTTPHandler)
-        request = urllib2.Request(url, body)
-        request.add_header('Content-Type', 'application/xml')
-        request.get_method = lambda: str(method)
-        response = opener.open(request)
-        return response
-    except httplib.HTTPException as inst:
-        print "\tException: %s" % inst
-    except ValueError as inst:
-        print "\tException submitting " + str(method) + " XML: " + str(inst)
-    except urllib2.HTTPError as inst:
-        print "\tException submitting " + str(method) + " XML: " + str(inst)
-    except:
-        print "\tUnknown error submitting " + str(method) + " XML"
+        session = requests.Session()
+        session.mount("https://" + str(jss_host) + ":" + str(jss_port), MyAdapter())
+        session.auth = (jss_username, jss_password)
+        session.headers.update({'Content-Type':'application/xml'})
+
+        if method == 'GET':
+            response = session.get("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path))
+        elif method == 'POST':
+            response = session.post("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+        elif method == 'PUT':
+            response = session.put("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+        return response.text
+
+    except requests.exceptions.RequestException as e:
+        print "Connection exception: " + e
 
 if __name__ == "__main__":
     main(sys.argv[1:])

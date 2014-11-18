@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:jamfMessage xmlns:ns2="http://www.jamfsoftware.com/JAMFMessage" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.jamfsoftware.com/JAMFMessage ../src/main/resources/schema/JAMFCommunicationSchema.xsd">
+    <device>
+        UDID
+        <macAddresses>
+            MACADDRESS
+        </macAddresses>
+    </device>
+    <application>com.jamfsoftware.jamf</application>
+    <messageTimestamp>1411756096000</messageTimestamp>
+    <content xsi:type="ns2:RequestContent">
+        <uuid>9A93E349-BEC5-476F-AB39-3B35E41EF227</uuid>
+        <commandType>com.jamfsoftware.jamf.checkforpoliciesrequest</commandType>
+        <status>
+            <code>0</code>
+            <timestamp>1411756096000</timestamp>
+        </status>
+        <commandData>
+            <checkForPolicies>
+                <ns2:username></ns2:username>
+                <ns2:trigger>CLIENT_CHECKIN</ns2:trigger>
+                <ns2:id>0</ns2:id>
+                <ns2:processor>i386</ns2:processor>
+                <ns2:day>Fri</ns2:day>
+                <ns2:hour>13</ns2:hour>
+                <ns2:minute>28</ns2:minute>
+                <ns2:networkRequirement>Ethernet</ns2:networkRequirement>
+                <ns2:reportedIP>10.11.24.125</ns2:reportedIP>
+                <ns2:version>0.0</ns2:version>
+            </checkForPolicies>
+        </commandData>
+    </content>
+</ns2:jamfMessage>
