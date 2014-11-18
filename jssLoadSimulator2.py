@@ -1,5 +1,6 @@
 #!/usr/bin/python
-
+#
+# This script will gather all computers in the JSS and simulate check ins based on intervals
 
 import getopt
 import sys

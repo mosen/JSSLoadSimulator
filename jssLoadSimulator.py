@@ -1,5 +1,6 @@
 #!/usr/bin/python
-#EULA
+#
+# This script will create new computers, POST them via the API then simulate check ins at intervals
 
 import base64
 import uuid
