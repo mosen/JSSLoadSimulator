@@ -29,6 +29,8 @@ jss_path = ""
 jss_username = ""
 jss_password = ""
 checkin_string = ""
+failed_attempts = ""
+connection_times = []
 
 
 def main(argv):
@@ -40,30 +42,37 @@ def main(argv):
     while n < int(number_of_times_to_update):
         n += 1
         i = 0
+        global failed_attempts
+        failed_attempts = 0
+        global connection_times
+        connection_times = []
+        print "Starting iteration..."
         while i < len(computers):
+            update_progress(float(i)/float(len(computers)))
             if (i + int(number_per_batch)) < len(computers):
                 x = 0
-                print 'Checking in ' + str(number_per_batch) + ' computers...'
                 while x < int(number_per_batch):
                     c = SubmitThread(computers[i])
                     c.start()
                     i += 1
                     x += 1
+                    update_progress(float(i)/float(len(computers)))
                 time.sleep(int(time_between_batches))
             else:
-                print 'Checking in ' + str((len(computers)) - i) + ' computers...'
                 while i < len(computers):
                     c = SubmitThread(computers[i])
                     c.start()
                     i += 1
+                    update_progress(float(i)/float(len(computers)))
                 time.sleep(int(time_between_batches))
+        print "******* Iteration complete ********"
+        print "Iteration completed with " + str(failed_attempts) + " failed attempts."
+        print "Iteration complete with average connection time: " + str(sum(connection_times)/len(connection_times)) + " seconds"
+        print "A max connection time of: " + str(max(connection_times)) + " seconds"
+        print "A min connection time of: " + str(min(connection_times)) + " seconds"
         if n < int(number_of_times_to_update):
             print 'Sleeping ' + str(time_between_updates) + ' before next check in'
             time.sleep(int(time_between_updates))
-
-
-
-
 
 
 def get_all_computers():
@@ -81,7 +90,7 @@ def get_all_computers():
             comp = Computer(computer.getElementsByTagName('id')[0].childNodes[0].data)
             computers.append(comp)
         except:
-            print 'failed'
+            print 'Failed to add computer'
 
 
 class Computer():
@@ -104,7 +113,7 @@ class Computer():
                 print "Check in failed for computer: " + self.udid + \
                      "\tMake sure Cert Based Communication is disabled"
         except:
-            print "failed"
+            print "Failed to check in computer: " + str(self.udid)
 
 
 class SubmitThread(threading.Thread):
@@ -189,6 +198,26 @@ def show_progress(index, total):
     sys.stdout.flush()
 
 
+def update_progress(progress):
+    bar_length = 10 # Modify this to change the length of the progress bar
+    status = ""
+    if isinstance(progress, int):
+        progress = float(progress)
+    if not isinstance(progress, float):
+        progress = 0
+        status = "error: progress var must be float\r\n"
+    if progress < 0:
+        progress = 0
+        status = "Halt...\r\n"
+    if progress >= 1:
+        progress = 1
+        status = "Done...\r\n"
+    block = int(round(bar_length*progress))
+    text = "\rPercent: [{0}] {1}% {2}".format( "#"*block + "-"*(bar_length-block), round(progress*100, 2), status)
+    sys.stdout.write(text)
+    sys.stdout.flush()
+
+
 class MyAdapter(HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=False):
         self.poolmanager = PoolManager(num_pools=connections, maxsize=maxsize, block=block,ssl_version=ssl.PROTOCOL_TLSv1)
@@ -218,17 +247,22 @@ def connect_jss_client(path, method, body):
         session = requests.Session()
         session.mount("https://" + str(jss_host) + ":" + str(jss_port), MyAdapter())
         session.headers.update({'Content-Type':'application/xml'})
-
+        start = time.time()
         if method == 'GET':
             response = session.get("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path))
         elif method == 'POST':
             response = session.post("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
         elif method == 'PUT':
             response = session.put("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+
+        global connection_times
+        connection_times.append(time.time() - start)
         return response.text
 
     except requests.exceptions.RequestException as e:
-        print "Connection exception: " + str(e)
+        #print "Connection exception: " + str(e)
+        global failed_attempts
+        failed_attempts += 1
 
 if __name__ == "__main__":
     main(sys.argv[1:])
