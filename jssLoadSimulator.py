@@ -30,6 +30,7 @@ jss_port = ""
 jss_path = ""
 jss_username = ""
 jss_password = ""
+verify_ssl = True
 
 
 def main(argv):
@@ -176,6 +177,8 @@ def verify_jss_details():
         jss_host = jss_info['jss_host']
         jss_port = jss_info['jss_port']
         jss_path = jss_info['jss_path']
+        jss_username = jss_info['jss_username']
+        
     if jss_host == '':
             jss_host = prompt_user('JSS Hostname')
     if jss_port == '':
@@ -183,7 +186,8 @@ def verify_jss_details():
     if jss_path == '' and not os.path.isfile(file_path):
             jss_path = prompt_user('JSS path (ex https://jss.com:8443/apple enter apple\n JSS path')
     global jss_username
-    jss_username = prompt_user('JSS Username')
+    if jss_username == '':
+        jss_username = prompt_user('JSS Username')
     global jss_password
     jss_password = getpass.getpass('Enter JSS Password: ')
 
@@ -244,13 +248,14 @@ def connect_jss(path, method, body):
         session.mount("https://" + str(jss_host) + ":" + str(jss_port), MyAdapter())
         session.auth = (jss_username, jss_password)
         session.headers.update({'Content-Type':'application/xml'})
+        verify_ssl = False
 
         if method == 'GET':
-            response = session.get("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path))
+            response = session.get("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), verify=verify_ssl)
         elif method == 'POST':
-            response = session.post("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+            response = session.post("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body, verify=verify_ssl)
         elif method == 'PUT':
-            response = session.put("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+            response = session.put("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body, verify=verify_ssl)
 
         return response.text
     except requests.exceptions.RequestException as e:
@@ -262,13 +267,14 @@ def connect_jss_client(path, method, body):
         session = requests.Session()
         session.mount("https://" + str(jss_host) + ":" + str(jss_port), MyAdapter())
         session.headers.update({'Content-Type':'application/xml'})
+        verify_ssl = False
 
         if method == 'GET':
-            response = session.get("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path))
+            response = session.get("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), verify=verify_ssl)
         elif method == 'POST':
-            response = session.post("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+            response = session.post("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body, verify=verify_ssl)
         elif method == 'PUT':
-            response = session.put("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body)
+            response = session.put("https://" + str(jss_host) + ":" + str(jss_port) + str(jss_path) + str(path), data=body, verify=verify_ssl)
         return response.text
 
     except requests.exceptions.RequestException as e:
