@@ -177,7 +177,7 @@ def verify_jss_details():
         jss_host = jss_info['jss_host']
         jss_port = jss_info['jss_port']
         jss_path = jss_info['jss_path']
-        jss_username = jss_info['jss_username']
+        jss_username = jss_info.get('jss_username', '')
         
     if jss_host == '':
             jss_host = prompt_user('JSS Hostname')
